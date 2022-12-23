@@ -6,17 +6,21 @@ import { categories } from "../utils/Data";
 import Loader from "./Loader";
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { storage } from "../firebase.config";
-import { onSnapshot } from "firebase/firestore";
+import { getAllFoodItems, saveItem } from "../utils/firebaseFunctions";
+import { actionType } from "../context/reducer";
+import { useStateValue } from "../context/StateProvider";
+
 const CreateContainer = () => {
   const [title, setTitle] = useState("");
   const [calories, setCalories] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState("other");
   const [imageAsset, setImageAsset] = useState(null);
   const [fields, setFields] = useState(false);
   const [alertStatus, setAlertStatus] = useState("danger");
   const [msg, setMsg] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [{foodItems},dispatch]=useStateValue();
 
   const uploadImage = (e) => {
     setIsLoading(true);
@@ -29,6 +33,7 @@ const CreateContainer = () => {
         const uploadProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
       },
       (error) => {
+        console.log(error);
         setFields(true);
         setMsg("Error while uploading, Try Again!");
         setAlertStatus("danger");
@@ -51,6 +56,7 @@ const CreateContainer = () => {
       }
     );
   };
+
   const deleteImage = () => {
     setIsLoading(true);
     const deleteRef = ref(storage, imageAsset);
@@ -65,7 +71,67 @@ const CreateContainer = () => {
       }, 4000);
     });
   };
-  const saveDetials = () => {};
+
+  const saveDetials = () => {
+    setIsLoading(true);
+    try {
+      if (!title || !price || !category || !imageAsset || !calories) {
+        setFields(true);
+        setMsg("Required Fields can't be empty");
+        setAlertStatus("danger");
+        setTimeout(() => {
+          setFields(false);
+        }, 4000);
+      }
+      else{
+        const data={
+          id:`${Date.now()}`,
+          title:title,
+          imageURL:imageAsset,
+          category:category,
+          calories:calories,
+          qty:1,
+          price:price
+        }
+        saveItem(data);
+        setIsLoading(false);
+          setFields(true);
+          setMsg("Data Uploaded Successfully");
+          clearData();
+          setAlertStatus("success");
+          setTimeout(() => {
+            setFields(false);
+          }, 4000);
+      }
+    } catch (error) {
+      console.log(error);
+      setFields(true);
+      setMsg("Error while uploading, Try Again!");
+      setAlertStatus("danger");
+      setTimeout(() => {
+        setFields(false);
+        setIsLoading(false);
+      }, 4000);
+    }
+    fetchData();
+  };
+
+  const clearData=()=>{
+    setTitle("");
+    setImageAsset(null);
+    setCalories("");
+    setPrice("");
+    setCategory("Select Category");
+  }
+  const fetchData=async ()=>{
+    await getAllFoodItems().then((data)=>{
+      dispatch({
+        type:actionType.SET_FOOD_ITEMS,
+        foodItems:data
+      })
+    })
+  }
+  
   return (
     <div className="w-full min-h-screen flex items-center justify-center">
       <div className="w-[90%] md:w-[75%] border border-gray-500 rounded-lg p-4 flex flex-col items-center justify-center gap-4">
@@ -104,7 +170,7 @@ const CreateContainer = () => {
             </option>
             {categories &&
               categories.map((item, i) => (
-                <option
+                <option key={i}
                   className="text-base bg-white outline-none capitalize text-headingColor"
                   value={item.urlParamName}
                 >

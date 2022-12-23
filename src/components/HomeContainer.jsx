@@ -49,6 +49,7 @@ const HomeContainer = () => {
               heroData.map((item, i) => (
                 <div
                   id={i}
+                  key={i}
                   className="lg:w-190 p-4 bg-cardOverlay backdrop-blur-md rounded-3xl flex flex-col items-center justify-center drop-shadow-lg"
                 >
                   <img
