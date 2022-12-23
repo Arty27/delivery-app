@@ -1,0 +1,8 @@
+/* Header Css */
+.mobile ul li {
+  padding: 8px 16px;
+}
+.mobile ul li:hover {
+  background-color: rgb(241 245 249);
+  transition: all 0.1s ease-in-out;
+}
