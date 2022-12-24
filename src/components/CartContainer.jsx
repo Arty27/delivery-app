@@ -1,18 +1,35 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MdOutlineKeyboardBackspace } from "react-icons/md";
 import { RiRefreshFill } from "react-icons/ri";
 import { motion } from "framer-motion";
-import { BiMinus, BiPlus } from "react-icons/bi";
 import { useStateValue } from "../context/StateProvider";
 import { actionType } from "../context/reducer";
 import EmptyCart from "../assets/img/emptyCart.svg";
+import CartItem from "./CartItem";
 const CartContainer = () => {
   const [{ user, cartShow, cartItems }, dispatch] = useStateValue();
+  const [flag, setFlag] = useState(1);
+  const [tot, setTot] = useState(0);
   const hideCart = () => {
     dispatch({
       type: actionType.SET_CART_SHOW,
       cartShow: !cartShow,
     });
+  };
+  useEffect(() => {
+    let totalPrice = cartItems.reduce(function (accumulator, item) {
+      return accumulator + item.qty * item.price;
+    }, 0);
+    setTot(totalPrice);
+    console.log(tot);
+  }, [tot, flag]);
+  const clearCart = () => {
+    dispatch({
+      type: actionType.SET_CARTITEMS,
+      cartItems: [],
+    });
+
+    localStorage.setItem("cartItems", JSON.stringify([]));
   };
   return (
     <motion.div
@@ -27,6 +44,7 @@ const CartContainer = () => {
         </motion.div>
         <p className="text-textColor text-2xl font-semibold">Cart</p>
         <motion.p
+          onClick={()=>clearCart()}
           whileTap={{ scale: 0.75 }}
           className="text-sm flex items-center bg-gray-100 rounded-md hover:shadow-md duration-100 ease-in-out transition-shadow cursor-pointer p-1 px-2"
         >
@@ -41,42 +59,19 @@ const CartContainer = () => {
             {cartItems &&
               cartItems.length > 0 &&
               cartItems.map((item, i) => (
-                <div
-                  key={i}
-                  className="w-full p-1 px-2 rounded-lg bg-cartItem flex items-center gap-2"
-                >
-                  <img
-                    src={item?.imageURL}
-                    alt={item?.title}
-                    className="w-20 h-20 max-w-[60px] rounded-full object-contain"
-                  />
-                  {/* Name of the item */}
-                  <div className="flex flex-col gap-2">
-                    <p className="text-base text-gray-50">{item?.title}</p>
-                    <p className="text-sm block text-gray-300 font-semibold">
-                      $ {item?.price}
-                    </p>
-                  </div>
-                  {/* Buttons for the Cart Item */}
-                  <div className="group flex items-center gap-2 ml-auto cursor-pointer">
-                    <motion.div whileTap={{ scale: 0.75 }}>
-                      <BiMinus className="text-gray-50" />
-                    </motion.div>
-                    <p className="w-5 h-5 rounded-sm bg-cartBg text-gray-50 flex items-center justify-center">
-                      5
-                    </p>
-                    <motion.div whileTap={{ scale: 0.75 }}>
-                      <BiPlus className="text-gray-50" />
-                    </motion.div>
-                  </div>
-                </div>
+                <CartItem
+                  key={item.id}
+                  item={item}
+                  setFlag={setFlag}
+                  flag={flag}
+                />
               ))}
           </div>
           {/* Cart Total Section */}
           <div className="w-full flex-1 bg-cartTotal rounded-t-[2rem] flex flex-col items-center justify-evenly px-8 py-2">
             <div className="w-full flex items-center justify-between">
               <p className="text-gray-400 text-lg">Sub Total</p>
-              <p className="text-gray-400 text-lg">$ 9</p>
+              <p className="text-gray-400 text-lg">$ {tot}</p>
             </div>
             <div className="w-full flex items-center justify-between">
               <p className="text-gray-400 text-lg">Delivery </p>
@@ -85,7 +80,9 @@ const CartContainer = () => {
             <div className="w-full border-b  border-gray-600 my-2"></div>
             <div className="w-full flex items-center justify-between">
               <p className="text-gray-400 text-xl font-semibold">Total </p>
-              <p className="text-gray-400 text-xl font-semibold">$ 2.5</p>
+              <p className="text-gray-400 text-xl font-semibold">
+                $ {tot + 2.5}
+              </p>
             </div>
             {user ? (
               <motion.button
